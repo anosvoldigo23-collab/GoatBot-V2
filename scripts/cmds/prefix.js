@@ -1,96 +1,64 @@
-const fs = require("fs-extra");
-const { utils } = global;
+const g = require("fca-aryan-nix");
+const moment = require("moment-timezone");
 
 module.exports = {
   config: {
     name: "prefix",
-    version: "3.1",
+    version: "3.9",
     author: "Christus",
-    countDown: 5,
+    countDown: 3,
     role: 0,
-    description: "🚀 𝗠𝗼𝗱𝗶𝗳𝗶𝗲 𝗹𝗲 𝗽𝗿𝗲́𝗳𝗶𝘅 𝗱𝘂 𝗯𝗼𝘁 𝗲𝗻 𝗺𝗮𝗷 𝗱𝗮𝗻𝘀 𝗹𝗲 𝗰𝗵𝗮𝘁 𝗼𝘂 𝗴𝗹𝗼𝗯𝗮𝗹𝗲𝗺𝗲𝗻𝘁",
-    category: "🛠️ 𝗦𝘆𝘀𝘁𝗲̀𝗺𝗲",
-    guide: {
-      en:
-`╔═══════════✨ 𝗣𝗥𝗘𝗙𝗜𝗫 𝗖𝗢𝗠𝗠𝗔𝗡𝗗 ✨═══════════╗
-║ 🔹 𝗨𝘁𝗶𝗹𝗶𝘀𝗮𝘁𝗶𝗼𝗻 :
-║   {pn} <𝗻𝗼𝘂𝘃𝗲𝗮𝘂 𝗽𝗿𝗲́𝗳𝗶𝘅𝗲> → change le préfixe du chat
-║   Exemple : {pn} $
-║
-║ 🌐 {pn} <𝗻𝗼𝘂𝘃𝗲𝗮𝘂 𝗽𝗿𝗲́𝗳𝗶𝘅𝗲> -g → change le préfixe global (Admin)
-║   Exemple : {pn} ! -g
-║
-║ ♻️ {pn} reset → réinitialise le préfixe par défaut
-║ 📌 {pn} → affiche les infos des préfixes
-╚════════════════════════════════════════════╝`
-    }
+    category: "Utility",
+    shortDescription: { fr: "🎯 Affiche le préfixe du bot et les infos utilisateur" },
+    longDescription: { fr: "Montre le préfixe actif, ton profil et le total des commandes." },
+    guide: { fr: "Utilise simplement 'prefix'." },
+    noPrefix: true
   },
 
-  langs: {
-    en: {
-      reset: "✅ 𝗣𝗿𝗲́𝗳𝗶𝘅𝗲 𝗿𝗲́𝗶𝗻𝗶𝘁𝗶𝗮𝗹𝗶𝘀𝗲́ : %1",
-      onlyAdmin: "⛔ Seuls les admins peuvent changer le préfixe global !",
-      confirmGlobal: "⚡ Clique pour confirmer la mise à jour du préfixe global 🌐",
-      confirmThisThread: "⚡ Clique pour confirmer la mise à jour du préfixe de ce chat 💬",
-      successGlobal: "✅ Préfixe global mis à jour avec succès : %1",
-      successThisThread: "✅ Préfixe du chat mis à jour avec succès : %1"
-    }
-  },
+  onStart: async function ({ api, event, usersData }) {
+    try {
+      const { threadID, senderID } = event;
+      const userInfo = await usersData.get(senderID);
+      const userName = userInfo?.name || "Utilisateur Inconnu";
+      const gender = userInfo?.gender === 2 ? "👨 Homme" : userInfo?.gender === 1 ? "👩 Femme" : "❓ Inconnu";
 
-  onStart: async function ({ message, role, args, commandName, event, threadsData, getLang }) {
-    if (!args[0]) return message.SyntaxError();
+      // Données du bot
+      const prefix = global.GoatBot.config.prefix || "+";
+      const totalCmd = global.GoatBot.commands?.size || 0;
+      const date = moment().tz("Africa/Abidjan").format("DD/MM/YYYY");
 
-    // 🔄 Réinitialisation du préfixe
-    if (args[0].toLowerCase() === "reset") {
-      await threadsData.set(event.threadID, null, "data.prefix");
-      return message.reply(getLang("reset", global.GoatBot.config.prefix));
-    }
+      const msg = `
+━━━━━━━━━━━━━━━━━━━
+🎯 𝐏𝐑𝐄𝐅𝐈𝐗 𝐈𝐍𝐅𝐎𝐑𝐌𝐀𝐓𝐈𝐎𝐍
+━━━━━━━━━━━━━━━━━━━
 
-    const newPrefix = args[0];
-    const setGlobal = args.includes("-g");
-    if (setGlobal && role < 2) return message.reply(getLang("onlyAdmin"));
+🏷️ 𝖯𝗋𝖾́𝖿𝗂𝗑𝖾 𝖺𝖼𝗍𝗎𝖾𝗅 : 「 ${prefix} 」
+📅 𝖬𝗂𝗌 𝖾𝗇 𝗌𝖾𝗋𝗏𝗂𝖼𝖾 : ${date}
+💬 𝖢𝗈𝗆𝗆𝖺𝗇𝖽𝖾𝗌 𝗍𝗈𝗍𝖺𝗅𝖾𝗌 : ${totalCmd}
 
-    const confirmMessage = setGlobal ? getLang("confirmGlobal") : getLang("confirmThisThread");
-    const sentMessage = await message.reply(confirmMessage);
+━━━━━━━━━━━━━━━━━━━
+👤 𝐔𝐓𝐈𝐋𝐈𝐒𝐀𝐓𝐄𝐔𝐑 𝐈𝐍𝐅𝐎𝐑𝐌𝐀𝐓𝐈𝐎𝐍
+━━━━━━━━━━━━━━━━━━━
 
-    global.GoatBot.onReaction.set(sentMessage.messageID, {
-      author: event.senderID,
-      newPrefix,
-      setGlobal,
-      messageID: sentMessage.messageID,
-      commandName
-    });
-  },
+📝 𝖭𝗈𝗆 : ${userName}
+🆔 𝖴𝗌𝖾𝗋 𝖨𝖣 : ${senderID}
+⚧️ 𝖦𝖾𝗇𝗋𝖾 : ${gender}
+🔗 𝖯𝗋𝗈𝖿𝗂𝗅𝖾 : https://facebook.com/${senderID}
 
-  onReaction: async function ({ message, event, Reaction, threadsData, getLang }) {
-    const { author, newPrefix, setGlobal } = Reaction;
-    if (event.userID !== author) return;
+━━━━━━━━━━━━━━━━━━━
+✨ 𝐏𝐨𝐮𝐫 𝐜𝐡𝐚𝐧𝐠𝐞𝐫 :
+${prefix}prefix <nouveau_prefix>
+━━━━━━━━━━━━━━━━━━━
+      `.trim();
 
-    if (setGlobal) {
-      global.GoatBot.config.prefix = newPrefix;
-      fs.writeFileSync(global.client.dirConfig, JSON.stringify(global.GoatBot.config, null, 2));
-      return message.reply(getLang("successGlobal", newPrefix));
-    }
-
-    await threadsData.set(event.threadID, newPrefix, "data.prefix");
-    return message.reply(getLang("successThisThread", newPrefix));
-  },
-
-  onChat: async function ({ event, message, threadsData, usersData }) {
-    const globalPrefix = global.GoatBot.config.prefix;
-    const threadPrefix = await threadsData.get(event.threadID, "data.prefix") || globalPrefix;
-
-    if (event.body && event.body.toLowerCase() === "prefix") {
-      const userName = await usersData.getName(event.senderID);
-
-      return message.reply(
-`╔═💎══════════════════ 𝗜𝗡𝗙𝗢 𝗣𝗥𝗘𝗙𝗜𝗫𝗘 💎═╗
-║ 👤 Utilisateur : ${userName}
-║ 🌐 Préfixe Global : ${globalPrefix}
-║ 💬 Préfixe du Chat : ${threadPrefix}
-╚═══════════════════════════════════════╝
-✨ 𝗖𝗛𝗥𝗜𝗦𝗧𝗨𝗦_𝗕𝗢𝗧 te souhaite de 💥 styliser 💥 tes messages !`
-      );
+      api.sendMessage(msg, threadID, event.messageID);
+    } catch (err) {
+      console.error(err);
+      api.sendMessage("❌ Erreur lors de la récupération des informations.", event.threadID, event.messageID);
     }
   }
 };
+
+// Activation du mode NOPREFIX
+const w = new g.GoatWrapper(module.exports);
+w.applyNoPrefix({ allowPrefix: false });
